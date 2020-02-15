@@ -183,6 +183,10 @@ class Cache implements CacheInterface
      */
     public function delete($id)
     {
+        if ($this->isDiabled() == true) {
+            return false;
+        }
+
         if ($this->driver->contains($id) == true) {
             return $this->driver->delete($id);
         }
@@ -197,16 +201,19 @@ class Cache implements CacheInterface
      */
     public function getStats()
     {
-        return $this->driver->getStats();
+        return ($this->isDiabled() == true) ? null : $this->driver->getStats();
     }
 
     /**
      * Delete all cache items + views cache files and route cache
      *
-     * @return void
+     * @return bool
      */
     public function clear()
     {
+        if ($this->isDiabled() == true) {
+            return false;
+        }
         $this->driver->deleteAll();
      
         return File::deleteDirectory($this->cacheDir);
