@@ -74,6 +74,16 @@ class Cache implements CacheInterface
     }
 
     /**
+     * Get cache dir
+     *
+     * @return string
+     */
+    public function getCacheDir()
+    {
+        return $this->cacheDir;
+    }
+
+    /**
      * Set status true - enabled
      *
      * @param boolean $status
