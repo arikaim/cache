@@ -314,10 +314,7 @@ class Cache implements CacheInterface
      * @return bool
      */
     public function clear()
-    {
-        if ($this->status == false) {
-            return false;
-        }
+    {       
         $this->driver->deleteAll();
      
         return File::deleteDirectory($this->cacheDir);
