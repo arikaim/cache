@@ -86,7 +86,7 @@ class Cache implements CacheInterface
      */
     public function __construct($cacheDir, $routerCacheFile, $driverName = null, $status = false)
     {
-        $this->setStatus($status);
+        $this->status = $status;
         $this->cacheDir = $cacheDir;
         $this->routerCacheFile = $routerCacheFile;
         $this->driver = $this->createDriver($driverName);                    
@@ -196,13 +196,13 @@ class Cache implements CacheInterface
     }
 
     /**
-     * Return true if cache is status
+     * Return true if cache is disabled
      *
      * @return boolean
      */
     public function isDiabled()
     {
-        return (empty($this->status) == true) ? false : !$this->status;
+        return !$this->status;
     }
 
     /**
@@ -252,7 +252,7 @@ class Cache implements CacheInterface
      */
     public function fetch($id)
     {      
-        return ($this->isDiabled() == true) ? null : $this->driver->fetch($id);
+        return ($this->status == true) ? $this->driver->fetch($id) : null;
     }
     
     /**
@@ -276,7 +276,7 @@ class Cache implements CacheInterface
      */
     public function save($id, $data, $lifeTime = 1)
     {
-        return ($this->isDiabled() == true) ? false : $this->driver->save($id,$data,($lifeTime * 60));
+        return ($this->status == true) ? $this->driver->save($id,$data,($lifeTime * 60)) : false;
     }
 
     /**
@@ -287,7 +287,7 @@ class Cache implements CacheInterface
      */
     public function delete($id)
     {
-        if ($this->isDiabled() == true) {
+        if ($this->status == false) {
             return false;
         }
 
@@ -305,7 +305,7 @@ class Cache implements CacheInterface
      */
     public function getStats()
     {
-        return ($this->isDiabled() == true) ? null : $this->driver->getStats();
+        return ($this->status == true) ? $this->driver->getStats() : null;
     }
 
     /**
@@ -315,7 +315,7 @@ class Cache implements CacheInterface
      */
     public function clear()
     {
-        if ($this->isDiabled() == true) {
+        if ($this->status == false) {
             return false;
         }
         $this->driver->deleteAll();
