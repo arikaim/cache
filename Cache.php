@@ -215,6 +215,11 @@ class Cache implements CacheInterface
         return $this->driver;
     }
 
+    /**
+     * Get cache driver name
+     *
+     * @return string
+     */
     public function getDriverName()
     {
         $driverClass = \get_class($this->driver);
