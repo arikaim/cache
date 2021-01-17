@@ -84,7 +84,12 @@ class Cache implements CacheInterface
      * @param string|null $driverName
      * @param boolean $status
      */
-    public function __construct($cacheDir, $routerCacheFile, $driverName = null, $status = false)
+    public function __construct(
+        string $cacheDir, 
+        ?string $routerCacheFile, 
+        ?string $driverName = null, 
+        bool $status = false
+    )
     {
         $this->status = $status;
         $this->cacheDir = $cacheDir;
@@ -97,7 +102,7 @@ class Cache implements CacheInterface
      *
      * @return array
      */
-    public function getSupportedDrivers()
+    public function getSupportedDrivers(): array
     {
         $result = [];
         foreach ($this->drivers as $name => $class) {
@@ -115,11 +120,11 @@ class Cache implements CacheInterface
      * @param string $driverName
      * @return boolean
      */
-    public function isAvailable($driverName)
+    public function isAvailable(string $driverName): bool
     {
         switch ($driverName) {          
             case Self::APCU_DRIVER: {
-                return (ini_get('apc.enabled') && extension_loaded('apc'));
+                return (\ini_get('apc.enabled') && \extension_loaded('apc'));
             }
             case Self::MEMCACHED_DRIVER: {
                 return \class_exists('Memcache');
@@ -136,7 +141,7 @@ class Cache implements CacheInterface
      * @throws Exception
      * @return Doctrine\Common\Cache\Cache|null
      */
-    public function createDriver($name)
+    public function createDriver(?string $name)
     {
         $name = (empty($name) == true) ? Self::DEFAULT_DRIVER : $name;
 
@@ -169,7 +174,7 @@ class Cache implements CacheInterface
      *
      * @return string
      */
-    public function getCacheDir()
+    public function getCacheDir(): string
     {
         return $this->cacheDir;
     }
@@ -180,7 +185,7 @@ class Cache implements CacheInterface
      * @param boolean $status
      * @return void
      */
-    public function setStatus($status)
+    public function setStatus(bool $status): void
     {      
         $this->status = $status;
     }
@@ -190,7 +195,7 @@ class Cache implements CacheInterface
      *
      * @return boolean
      */
-    public function getStatus()
+    public function getStatus(): bool
     {
         return $this->status;
     }
@@ -200,7 +205,7 @@ class Cache implements CacheInterface
      *
      * @return boolean
      */
-    public function isDiabled()
+    public function isDiabled(): bool
     {
         return !$this->status;
     }
@@ -218,15 +223,15 @@ class Cache implements CacheInterface
     /**
      * Get cache driver name
      *
-     * @return string
+     * @return string|null
      */
-    public function getDriverName()
+    public function getDriverName(): ?string
     {
         $driverClass = \get_class($this->driver);
         $drivers = $this->getSupportedDrivers();
         $found = \array_search($driverClass,$drivers);
 
-        return $found;
+        return ($found === false) ? null : $found;
     }
 
     /**
@@ -236,7 +241,7 @@ class Cache implements CacheInterface
      * @throws Exception
      * @return void
      */
-    public function setDriver($driver)
+    public function setDriver($driver): void
     {
         if ($driver instanceof CacheDriverInterface) {
             $this->driver = $driver;
@@ -252,10 +257,10 @@ class Cache implements CacheInterface
     /**
      * Read item
      *
-     * @param  string $id
+     * @param string $id
      * @return mixed|null
      */
-    public function fetch($id)
+    public function fetch(string $id)
     {      
         return ($this->status == true) ? $this->driver->fetch($id) : null;
     }
@@ -266,7 +271,7 @@ class Cache implements CacheInterface
      * @param string $id
      * @return bool
      */
-    public function has($id)
+    public function has(string $id): bool
     {
         return $this->driver->contains($id);
     }
@@ -279,7 +284,7 @@ class Cache implements CacheInterface
      * @param integer $lifeTime lifetime in minutes
      * @return bool
      */
-    public function save($id, $data, $lifeTime = 1)
+    public function save(string $id, $data, int $lifeTime = 1): bool
     {
         return ($this->status == true) ? $this->driver->save($id,$data,($lifeTime * 60)) : false;
     }
@@ -290,7 +295,7 @@ class Cache implements CacheInterface
      * @param string $id
      * @return bool
      */
-    public function delete($id)
+    public function delete(string $id): bool
     {
         if ($this->status == false) {
             return false;
@@ -308,7 +313,7 @@ class Cache implements CacheInterface
      *
      * @return array|null
      */
-    public function getStats()
+    public function getStats(): ?array
     {
         return ($this->status == true) ? $this->driver->getStats() : null;
     }
@@ -318,7 +323,7 @@ class Cache implements CacheInterface
      *
      * @return bool
      */
-    public function clear()
+    public function clear(): bool
     {       
         $this->driver->deleteAll();
         $this->clearRouteCache();
@@ -331,7 +336,7 @@ class Cache implements CacheInterface
      *
      * @return boolean
      */
-    public function hasRouteCache()
+    public function hasRouteCache(): bool
     {
         return (empty($this->routerCacheFile) == true) ? false : File::exists($this->routerCacheFile);
     }
@@ -341,7 +346,7 @@ class Cache implements CacheInterface
      *
      * @return bool
      */
-    public function clearRouteCache()
+    public function clearRouteCache(): bool
     {
         $this->delete('routes.list');
 
