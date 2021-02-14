@@ -273,7 +273,7 @@ class Cache implements CacheInterface
      */
     public function has(string $id): bool
     {
-        return $this->driver->contains($id);
+        return ($this->status == true) ? $this->driver->contains($id) : false;
     }
 
     /**
