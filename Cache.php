@@ -77,6 +77,13 @@ class Cache implements CacheInterface
     protected $routeCacheFile;
 
     /**
+     * Default save time
+     *
+     * @var int
+     */
+    protected $saveTime;
+
+    /**
      * Constructor
      *
      * @param string $cacheDir   
@@ -88,13 +95,15 @@ class Cache implements CacheInterface
         string $cacheDir, 
         ?string $routerCacheFile, 
         ?string $driverName = null, 
-        bool $status = false
+        bool $status = false, 
+        int $saveTime = 7
     )
     {
         $this->status = $status;
+        $this->saveTime = $saveTime;      
         $this->cacheDir = $cacheDir;
         $this->routerCacheFile = $routerCacheFile;
-        $this->driver = $this->createDriver($driverName);                    
+        $this->driver = $this->createDriver($driverName);  
     }
 
     /**
@@ -258,11 +267,11 @@ class Cache implements CacheInterface
      * Read item
      *
      * @param string $id
-     * @return mixed|null
+     * @return mixed|false
      */
     public function fetch(string $id)
     {      
-        return ($this->status == true) ? $this->driver->fetch($id) : null;
+        return ($this->status == true) ? $this->driver->fetch($id) : false;
     }
     
     /**
@@ -281,11 +290,13 @@ class Cache implements CacheInterface
      *
      * @param string $id item id
      * @param mixed $data item data
-     * @param integer $lifeTime lifetime in minutes
+     * @param integer|null $lifeTime lifetime in minutes
      * @return bool
      */
-    public function save(string $id, $data, int $lifeTime = 1): bool
+    public function save(string $id, $data, ?int $lifeTime = null): bool
     {
+        $lifeTime = $lifeTime ?? $this->saveTime;
+
         return ($this->status == true) ? $this->driver->save($id,$data,($lifeTime * 60)) : false;
     }
 
