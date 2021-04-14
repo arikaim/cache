@@ -133,7 +133,7 @@ class Cache implements CacheInterface
     {
         switch ($driverName) {          
             case Self::APCU_DRIVER: {
-                return (\ini_get('apc.enabled') && \extension_loaded('apc'));
+                return \extension_loaded('apcu');
             }
             case Self::MEMCACHED_DRIVER: {
                 return \class_exists('Memcache');
