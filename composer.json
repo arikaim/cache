@@ -12,7 +12,7 @@
     "homepage": "http://arikaim.com",
     "require": {
         "php": ">=7.1",
-        "doctrine/cache": "^1.8.0",      
+        "doctrine/cache": "^1.12.0",      
         "arikaim/utils": "^1.0.0",
         "arikaim/interfaces": "^1.0.0"
     },

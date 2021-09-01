@@ -23,11 +23,16 @@ class Cache implements CacheInterface
     const DEFAULT_DRIVER    = 'filesystem';
     // drivers
     const FILESYSTEM_DRIVER = 'filesystem';
+    const PHPFILE_DRIVER    = 'phpfile';
     const APCU_DRIVER       = 'apcu';
     const ARRAY_DRIVER      = 'array';
     const VOID_DRIVER       = 'void';
     const MEMCACHED_DRIVER  = 'memcached';
-    
+    const MEMCACHE_DRIVER   = 'memcache';
+    const REDIS_DRIVER      = 'redis';
+    const PREDIS_DRIVER     = 'predis';
+
+
     /**
      * Drivers list
      *
@@ -35,10 +40,14 @@ class Cache implements CacheInterface
      */
     protected $drivers = [
         Self::FILESYSTEM_DRIVER => 'Doctrine\Common\Cache\FilesystemCache',
+        Self::PHPFILE_DRIVER    => 'Doctrine\Common\Cache\PhpFileCache',
         Self::APCU_DRIVER       => 'Doctrine\Common\Cache\ApcuCache',
         Self::MEMCACHED_DRIVER  => 'Doctrine\Common\Cache\MemcachedCache',
+        Self::MEMCACHE_DRIVER   => 'Doctrine\Common\Cache\MemcacheCache',
         Self::ARRAY_DRIVER      => 'Doctrine\Common\Cache\ArrayCache',
-        Self::VOID_DRIVER       => 'Doctrine\Common\Cache\VoidCache'
+        Self::VOID_DRIVER       => 'Doctrine\Common\Cache\VoidCache',
+        Self::REDIS_DRIVER      => 'Doctrine\Common\Cache\RedisCache',
+        Self::PREDIS_DRIVER     => 'Doctrine\Common\Cache\PredisCache'
     ];
 
     /**
@@ -136,7 +145,16 @@ class Cache implements CacheInterface
                 return \extension_loaded('apcu');
             }
             case Self::MEMCACHED_DRIVER: {
-                return \class_exists('Memcache');
+                return \class_exists('\Memcache');
+            }
+            case Self::MEMCACHE_DRIVER: {
+                return \class_exists('\Memcached');
+            }
+            case Self::REDIS_DRIVER: {
+                return \class_exists('\Redis');
+            }
+            case Self::REDIS_DRIVER: {
+                return \class_exists('\Predis\Client');
             }
         }
 
@@ -152,25 +170,45 @@ class Cache implements CacheInterface
      */
     public function createDriver(?string $name)
     {
-        $name = (empty($name) == true) ? Self::DEFAULT_DRIVER : $name;
+        $name = empty($name) ? Self::DEFAULT_DRIVER : $name;
 
         switch ($name) {
             case Self::FILESYSTEM_DRIVER:
                 return new \Doctrine\Common\Cache\FilesystemCache($this->cacheDir);
+            case Self::PHPFILE_DRIVER:
+                return new \Doctrine\Common\Cache\PhpFileCache($this->cacheDir);
             case Self::APCU_DRIVER:
                 return new \Doctrine\Common\Cache\ApcuCache();           
             case Self::ARRAY_DRIVER:
                 return new \Doctrine\Common\Cache\ArrayCache();
-            case Self::MEMCACHED_DRIVER: {                
-                $driver = new \Doctrine\Common\Cache\MemcachedCache();
-                $memcachedClass = '\Memcached';
-                $memcached = (\class_exists($memcachedClass) == true) ? new $memcachedClass() : null;
-                $driver->setMemcached($memcached);
-
-                return $driver;
-            }
             case Self::VOID_DRIVER:
                 return new \Doctrine\Common\Cache\VoidCache();
+            case Self::MEMCACHED_DRIVER: {                
+                $driver = new \Doctrine\Common\Cache\MemcachedCache();
+                $class = '\Memcached';              
+                $driver->setMemcached(new $class());
+                return $driver;
+            }
+            case Self::MEMCACHE_DRIVER: {                
+                $driver = new \Doctrine\Common\Cache\MemcacheCache();
+                $class = '\Memcache';    
+                $memcache = new $class();
+                $memcache->connect('localhost',11211);
+                $driver->setMemcache($memcache);
+                return $driver;
+            }           
+            case Self::REDIS_DRIVER: {
+                $class = '\Redis';    
+                $redis = new $class();
+                $driver = new \Doctrine\Common\Cache\RedisCache($redis);
+                return $driver;
+            }
+            case Self::PREDIS_DRIVER: {
+                $class = '\Predis\Client';    
+                $client = new $class();
+                $driver = new \Doctrine\Common\Cache\PredisCache($client);
+                return $driver;
+            }
             default:
                 throw new Exception('Error: cache driver not valid!',1);  
         }
