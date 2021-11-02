@@ -153,7 +153,7 @@ class Cache implements CacheInterface
             case Self::REDIS_DRIVER: {
                 return \class_exists('\Redis');
             }
-            case Self::REDIS_DRIVER: {
+            case Self::PREDIS_DRIVER: {
                 return \class_exists('\Predis\Client');
             }
         }
