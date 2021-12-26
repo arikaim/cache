@@ -32,7 +32,6 @@ class Cache implements CacheInterface
     const REDIS_DRIVER      = 'redis';
     const PREDIS_DRIVER     = 'predis';
 
-
     /**
      * Drivers list
      *
@@ -65,13 +64,6 @@ class Cache implements CacheInterface
     private $status;
 
     /**
-     * Router cache file name
-     *
-     * @var string|null
-     */
-    private $routerCacheFile;
-
-    /**
      * Cache directory
      *
      * @var string
@@ -95,14 +87,12 @@ class Cache implements CacheInterface
     /**
      * Constructor
      *
-     * @param string $cacheDir   
-     * @param string|null $routerCacheFile
+     * @param string $cacheDir       
      * @param string|null $driverName
      * @param boolean $status
      */
     public function __construct(
-        string $cacheDir, 
-        ?string $routerCacheFile, 
+        string $cacheDir,      
         ?string $driverName = null, 
         bool $status = false, 
         int $saveTime = 7
@@ -110,8 +100,7 @@ class Cache implements CacheInterface
     {
         $this->status = $status;
         $this->saveTime = $saveTime;      
-        $this->cacheDir = $cacheDir;
-        $this->routerCacheFile = $routerCacheFile;
+        $this->cacheDir = $cacheDir;       
         $this->driver = $this->createDriver($driverName);  
     }
 
@@ -171,49 +160,38 @@ class Cache implements CacheInterface
     public function createDriver(?string $name)
     {
         $name = empty($name) ? Self::DEFAULT_DRIVER : $name;
+        $class = $this->drivers[$name] ?? null;
+
+        if (empty($class) == true) {
+            throw new Exception('Error: cache driver not valid!',1);  
+        }
 
         switch ($name) {
-            case Self::FILESYSTEM_DRIVER:
-                return new \Doctrine\Common\Cache\FilesystemCache($this->cacheDir);
-            case Self::PHPFILE_DRIVER:
-                return new \Doctrine\Common\Cache\PhpFileCache($this->cacheDir);
-            case Self::APCU_DRIVER:
-                return new \Doctrine\Common\Cache\ApcuCache();           
-            case Self::ARRAY_DRIVER:
-                return new \Doctrine\Common\Cache\ArrayCache();
-            case Self::VOID_DRIVER:
-                return new \Doctrine\Common\Cache\VoidCache();
+            case Self::FILESYSTEM_DRIVER:               
+                return new $class($this->cacheDir);
+            case Self::PHPFILE_DRIVER:              
+                return new $class($this->cacheDir);
             case Self::MEMCACHED_DRIVER: {                
-                $driver = new \Doctrine\Common\Cache\MemcachedCache();
-                $class = '\Memcached';              
-                $driver->setMemcached(new $class());
+                $driver = new $class();                     
+                $driver->setMemcached(new \Memcached());
                 return $driver;
             }
             case Self::MEMCACHE_DRIVER: {                
-                $driver = new \Doctrine\Common\Cache\MemcacheCache();
-                $class = '\Memcache';    
-                $memcache = new $class();
+                $driver = new $class();
+                $memcache = new \Memcache();
                 $memcache->connect('localhost',11211);
                 $driver->setMemcache($memcache);
                 return $driver;
             }           
-            case Self::REDIS_DRIVER: {
-                $class = '\Redis';    
-                $redis = new $class();
-                $driver = new \Doctrine\Common\Cache\RedisCache($redis);
-                return $driver;
+            case Self::REDIS_DRIVER: {                
+                return new $class(new \Redis());              
             }
-            case Self::PREDIS_DRIVER: {
-                $class = '\Predis\Client';    
-                $client = new $class();
-                $driver = new \Doctrine\Common\Cache\PredisCache($client);
-                return $driver;
-            }
-            default:
-                throw new Exception('Error: cache driver not valid!',1);  
+            case Self::PREDIS_DRIVER: {               
+                return new $class(new \Predis\Client());             
+            }          
         }
         
-        return null;
+        return new $class();
     }
 
     /**
@@ -375,30 +353,7 @@ class Cache implements CacheInterface
     public function clear(): bool
     {       
         $this->driver->deleteAll();
-        $this->clearRouteCache();
         
         return File::deleteDirectory($this->cacheDir);
-    }
-
-    /**
-     * Return true if route ceche file exist
-     *
-     * @return boolean
-     */
-    public function hasRouteCache(): bool
-    {
-        return (empty($this->routerCacheFile) == true) ? false : File::exists($this->routerCacheFile);
-    }
-
-    /**
-     * Delete route cache items and route cache file
-     *
-     * @return bool
-     */
-    public function clearRouteCache(): bool
-    {
-        $this->delete('routes.list');
-
-        return (empty($this->routerCacheFile) == true) ? true : File::delete($this->routerCacheFile);
     }
 }
