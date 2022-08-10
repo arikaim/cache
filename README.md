@@ -4,9 +4,6 @@
    
 
 
-#### Requirements 
-  * PHP 7.3, 7.4
-
 #### Installation
 
 ```sh

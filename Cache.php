@@ -11,7 +11,6 @@ namespace Arikaim\Core\Cache;
 
 use Doctrine\Common\Cache\Cache as CacheDriverInterface;
 
-use Arikaim\Core\Utils\File;
 use Arikaim\Core\Interfaces\CacheInterface;
 use Exception;
 
@@ -354,6 +353,6 @@ class Cache implements CacheInterface
     {       
         $this->driver->deleteAll();
         
-        return File::deleteDirectory($this->cacheDir);
+        return \Arikaim\Core\Utils\File::deleteDirectory($this->cacheDir);
     }
 }
