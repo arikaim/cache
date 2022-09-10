@@ -9,10 +9,7 @@
 */
 namespace Arikaim\Core\Cache;
 
-use Doctrine\Common\Cache\Cache as CacheDriverInterface;
-
 use Arikaim\Core\Interfaces\CacheInterface;
-use Exception;
 
 /**
  * Cache 
@@ -20,14 +17,11 @@ use Exception;
 class Cache implements CacheInterface
 {
     const DEFAULT_DRIVER    = 'void';
+
     // drivers
     const FILESYSTEM_DRIVER = 'filesystem';
-    const PHPFILE_DRIVER    = 'phpfile';
     const APCU_DRIVER       = 'apcu';
-    const ARRAY_DRIVER      = 'array';
     const VOID_DRIVER       = 'void';
-    const MEMCACHED_DRIVER  = 'memcached';
-    const MEMCACHE_DRIVER   = 'memcache';
     const REDIS_DRIVER      = 'redis';
     const PREDIS_DRIVER     = 'predis';
 
@@ -37,15 +31,11 @@ class Cache implements CacheInterface
      * @var array
      */
     protected $drivers = [
-        Self::FILESYSTEM_DRIVER => 'Doctrine\Common\Cache\FilesystemCache',
-        Self::PHPFILE_DRIVER    => 'Doctrine\Common\Cache\PhpFileCache',
-        Self::APCU_DRIVER       => 'Doctrine\Common\Cache\ApcuCache',
-        Self::MEMCACHED_DRIVER  => 'Doctrine\Common\Cache\MemcachedCache',
-        Self::MEMCACHE_DRIVER   => 'Doctrine\Common\Cache\MemcacheCache',
-        Self::ARRAY_DRIVER      => 'Doctrine\Common\Cache\ArrayCache',
-        Self::VOID_DRIVER       => 'Doctrine\Common\Cache\VoidCache',
-        Self::REDIS_DRIVER      => 'Doctrine\Common\Cache\RedisCache',
-        Self::PREDIS_DRIVER     => 'Doctrine\Common\Cache\PredisCache'
+        Self::FILESYSTEM_DRIVER => 'Arikaim\Core\Cache\Drivers\FilesystemCache',
+        Self::APCU_DRIVER       => 'Arikaim\Core\Cache\Drivers\ApcuCache',
+        Self::VOID_DRIVER       => 'Arikaim\Core\Cache\Drivers\VoidCache',
+        Self::REDIS_DRIVER      => 'Arikaim\Core\Cache\Drivers\RedisCache',
+        Self::PREDIS_DRIVER     => 'Arikaim\Core\Cache\Drivers\PredisCache'
     ];
 
     /**
@@ -85,12 +75,13 @@ class Cache implements CacheInterface
     public function __construct(
         string $cacheDir,      
         string $driverName = 'void',        
-        int $saveTime = 7
+        int $saveTime = 7, 
+        array $options = []
     )
     {       
         $this->saveTime = $saveTime;      
         $this->cacheDir = $cacheDir;       
-        $this->driver = $this->createDriver($driverName);  
+        $this->driver = $this->createDriver($driverName,$options);  
     }
 
     /**
@@ -122,12 +113,6 @@ class Cache implements CacheInterface
             case Self::APCU_DRIVER: {
                 return \extension_loaded('apcu');
             }
-            case Self::MEMCACHED_DRIVER: {
-                return \class_exists('\Memcache');
-            }
-            case Self::MEMCACHE_DRIVER: {
-                return \class_exists('\Memcached');
-            }
             case Self::REDIS_DRIVER: {
                 return \class_exists('\Redis');
             }
@@ -143,42 +128,19 @@ class Cache implements CacheInterface
      * Create cache driver
      *
      * @param string $name
-     * @throws Exception
+     * @param array $options
      * @return Doctrine\Common\Cache\Cache|null
      */
-    public function createDriver(string $name)
+    public function createDriver(string $name, array $options = [])
     {
-        $class = $this->drivers[$name] ?? null;
-        if (empty($class) == true) {
-            throw new Exception('Error: cache driver not valid!',1);  
-        }
-
+        $class = (empty($this->drivers[$name] ?? null) == true) ? $this->drivers['void'] : $this->drivers[$name];
+      
         switch ($name) {
             case Self::FILESYSTEM_DRIVER:               
-                return new $class($this->cacheDir);
-            case Self::PHPFILE_DRIVER:              
-                return new $class($this->cacheDir);
-            case Self::MEMCACHED_DRIVER: {                
-                $driver = new $class();                     
-                $driver->setMemcached(new \Memcached());
-                return $driver;
-            }
-            case Self::MEMCACHE_DRIVER: {                
-                $driver = new $class();
-                $memcache = new \Memcache();
-                $memcache->connect('localhost',11211);
-                $driver->setMemcache($memcache);
-                return $driver;
-            }           
-            case Self::REDIS_DRIVER: {                
-                return new $class(new \Redis());              
-            }
-            case Self::PREDIS_DRIVER: {               
-                return new $class(new \Predis\Client());             
-            }          
+                return new $class($this->cacheDir,$options);        
         }
         
-        return new $class();
+        return new $class($options);
     }
 
     /**
@@ -208,9 +170,7 @@ class Cache implements CacheInterface
      */
     public function getDriverName(): ?string
     {
-        $driverClass = \get_class($this->driver);
-        $drivers = $this->getSupportedDrivers();
-        $found = \array_search($driverClass,$drivers);
+        $found = \array_search(\get_class($this->driver),$this->getSupportedDrivers());
 
         return ($found === false) ? null : $found;
     }
@@ -219,20 +179,11 @@ class Cache implements CacheInterface
      * Set cache driver
      *
      * @param Doctrine\Common\Cache\Cache|string $driver
-     * @throws Exception
      * @return void
      */
-    public function setDriver($driver): void
+    public function setDriver($driver, array $options = []): void
     {
-        if ($driver instanceof CacheDriverInterface) {
-            $this->driver = $driver;
-        } else {
-            $driver = $this->createDriver($driver);
-            if (empty($driver) == true) {
-                throw new Exception('Error: cache driver not valid!', 1);
-            }
-            $this->driver = $driver;
-        }
+        $this->driver = ($driver instanceof CacheInterface) ? $driver : $this->createDriver($driver<$options);
     }
 
     /**
@@ -254,7 +205,7 @@ class Cache implements CacheInterface
      */
     public function has(string $id): bool
     {
-        return $this->driver->contains($id);
+        return $this->driver->has($id);
     }
 
     /**
@@ -265,9 +216,11 @@ class Cache implements CacheInterface
      * @param integer|null $lifeTime lifetime in minutes
      * @return bool
      */
-    public function save(string $id, $data, ?int $lifeTime = null): bool
+    public function save(string $id, $data, int $lifeTime = 0): bool
     {
-        return $this->driver->save($id,$data,($lifeTime ?? $this->saveTime * 60));
+        $lifeTime = (empty($lifeTime) == true) ? $this->saveTime : $lifeTime;
+        
+        return $this->driver->save($id,$data,$lifeTime * 60000);
     }
 
     /**
@@ -278,7 +231,7 @@ class Cache implements CacheInterface
      */
     public function delete(string $id): bool
     {
-        return ($this->driver->contains($id) == true) ? $this->driver->delete($id) : true;           
+        return $this->driver->delete($id);     
     }
 
     /**
@@ -298,8 +251,30 @@ class Cache implements CacheInterface
      */
     public function clear(): bool
     {       
-        $this->driver->deleteAll();
-        
-        return \Arikaim\Core\Utils\File::deleteDirectory($this->cacheDir);
+        return $this->driver->clear();
+    }
+
+    /**
+     * Create cache path.
+     *
+     * @return bool
+     */
+    public function createPath(): bool
+    {
+        if (\is_dir($this->cacheDir) == false) {
+            try {
+                \mkdir($this->cacheDir,0777 & (~$this->umask),true);
+
+                return (\is_dir($this->cacheDir) !== false);
+            } catch (\Exception $e) {
+                return false;
+            }
+        }
+
+        if (\is_writable($this->cacheDir) == false) {
+            \chmod($this->cacheDir,0777);
+        }
+
+        return true;
     }
 }
