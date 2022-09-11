@@ -16,7 +16,7 @@ use Arikaim\Core\Interfaces\CacheInterface;
  * Void cache driver class
  * 
  */
-class VoidCacheDriver implements CacheInterface
+class VoidCache implements CacheInterface
 {
     /**
      * Constructor
