@@ -251,6 +251,9 @@ class Cache implements CacheInterface
      */
     public function clear(): bool
     {       
+        // clear templates cache
+        \Arikaim\Core\Utils\File::deleteDirectory($this->cacheDir);
+
         return $this->driver->clear();
     }
 

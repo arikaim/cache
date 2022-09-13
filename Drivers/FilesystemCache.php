@@ -46,7 +46,6 @@ class FilesystemCache implements CacheInterface
         $this->options = $options;
         $this->cacheDir = $cacheDir;
         $this->umask = $umask;
-        $this->extLength = \strlen(Self::FILE_EXTENSION);
     }
 
     /**
@@ -58,8 +57,10 @@ class FilesystemCache implements CacheInterface
     public function fetch(string $id)
     {
         $filename = $this->getFilename($id);
-
         try {
+            if (\is_file($filename) == false) {
+                return false;
+            }
             $fileTime = \filemtime($filename);
             if ($fileTime !== false && $fileTime < time()) {
                 return false;
@@ -164,10 +165,7 @@ class FilesystemCache implements CacheInterface
      * @return string
      */
     protected function getFilename(string $id): string
-    {
-        $hash = \hash('sha256',$id);
-        $filename = ($id === '' || ((\strlen($id) * 2 + $this->extLength) > 255)) ? '_' . $hash : \bin2hex($id);
-        
-        return $this->cacheDir . $filename . SELF::FILE_EXTENSION;
+    {  
+        return $this->cacheDir . \md5($id) . SELF::FILE_EXTENSION;
     }
 }
