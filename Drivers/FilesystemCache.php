@@ -57,6 +57,7 @@ class FilesystemCache implements CacheInterface
     public function fetch(string $id)
     {
         $filename = $this->getFilename($id);
+
         try {
             if (\is_file($filename) == false) {
                 return false;
