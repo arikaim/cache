@@ -9,7 +9,7 @@
 */
 namespace Arikaim\Core\Cache\Drivers;
 
-use Redis;
+use \Redis;
 use Arikaim\Core\Interfaces\CacheInterface;
 
 /**

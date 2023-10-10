@@ -114,7 +114,7 @@ class Cache implements CacheInterface
                 return \extension_loaded('apcu');
             }
             case Self::REDIS_DRIVER: {
-                return \class_exists('\Redis');
+                return \class_exists('Redis');
             }
             case Self::PREDIS_DRIVER: {
                 return \class_exists('\Predis\Client');
@@ -266,7 +266,7 @@ class Cache implements CacheInterface
     {
         if (\is_dir($this->cacheDir) == false) {
             try {
-                \mkdir($this->cacheDir,0777 & (~$this->umask),true);
+                \mkdir($this->cacheDir,0777,true);
 
                 return (\is_dir($this->cacheDir) !== false);
             } catch (\Exception $e) {
