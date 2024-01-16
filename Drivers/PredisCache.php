@@ -120,6 +120,18 @@ class PredisCache implements CacheInterface
      */
     public function getStats(): ?array
     {
-        return $this->redisClient->info();
+        $info = $this->redisClient->info();     
+        unset(
+            $info['Keyspace'],
+            $info['Modules'],
+            $info['Cluster'],
+            $info['CPU'],
+            $info['Replication'],
+            $info['Clients'],
+            $info['Persistence'],
+            $info['Server']
+        );
+
+        return $info;
     }
 }
