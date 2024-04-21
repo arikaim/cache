@@ -5,7 +5,7 @@
  * @link        http://www.arikaim.com
  * @copyright   Copyright (c)  Konstantin Atanasov <info@arikaim.com>
  * @license     http://www.arikaim.com/license
- * 
+ * @package     Cache
 */
 namespace Arikaim\Core\Cache\Drivers;
 
@@ -33,6 +33,13 @@ class FilesystemCache implements CacheInterface
      * @var array
      */
     protected $options;
+
+    /**
+     * File umask
+     *
+     * @var mixed
+     */
+    protected $umask;
 
     /**
      * Constructor

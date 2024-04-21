@@ -5,7 +5,7 @@
  * @link        http://www.arikaim.com
  * @copyright   Copyright (c)  Konstantin Atanasov <info@arikaim.com>
  * @license     http://www.arikaim.com/license
- * 
+ * @package     Cache
 */
 namespace Arikaim\Core\Cache;
 
@@ -71,6 +71,8 @@ class Cache implements CacheInterface
      *
      * @param string $cacheDir       
      * @param string $driverName
+     * @param int $saveTime
+     * @param array $options
      */
     public function __construct(
         string $cacheDir,      

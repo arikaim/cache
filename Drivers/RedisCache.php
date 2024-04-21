@@ -5,7 +5,7 @@
  * @link        http://www.arikaim.com
  * @copyright   Copyright (c)  Konstantin Atanasov <info@arikaim.com>
  * @license     http://www.arikaim.com/license
- * 
+ * @package     Cache
 */
 namespace Arikaim\Core\Cache\Drivers;
 
@@ -40,9 +40,8 @@ class RedisCache implements CacheInterface
     {
         $this->options = $options;
         $serializer = (defined('Redis::SERIALIZER_IGBINARY') && extension_loaded('igbinary')) ? Redis::SERIALIZER_IGBINARY : Redis::SERIALIZER_PHP;
-        $redis->setOption(Redis::OPT_SERIALIZER,$serializer);
-
         $this->redis = new Redis();
+        $this->redis->setOption(Redis::OPT_SERIALIZER,$serializer);
     }
 
     /**
